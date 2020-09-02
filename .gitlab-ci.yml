@@ -1,0 +1,39 @@
+variables:
+  APP_CHART_NAME: task-connector-be ## replace the right chart name
+  KUBECONFIG: /etc/deploy/config
+  DEV_URL: https://dev.meeraspace.com
+  TEST_URL: https://test.meeraspace.com
+  DEMO_MEERAONLINE_URL: https://meeraonline.cn
+  STAGING_URL: https://target.meeraspace.com
+  SLACK_CHANNEL: gitlab-notifications
+  # HELM_CLIENT_VERSION: v2.12.3  ##  the global variable
+  HELM_REPO_TARGET: https://chartmuseum.target.meeraspace.com/
+
+  DOCKER_DRIVER: overlay2
+
+stages:
+ - test
+ - build
+
+include:
+  - remote: https://target-digital-transformation.gitlab.io/pipeline/01_build.yml
+
+
+test-coverage:
+  image: golang:1.11.2-alpine3.8
+  stage: test
+  script:
+    - mkdir -p /go/src/gitlab.com/target-smart-data-ai-searsh
+    - ln -s ${PWD} /go/src/gitlab.com/target-smart-data-ai-searsh
+    - apk add --no-cache git build-base
+    - cd /go/src/gitlab.com/target-smart-data-ai-searsh/task-connector-be/cmd
+    - go test ./... -v -coverprofile .testCoverage.txt
+  except:
+    - tags
+
+build_single_image:
+  extends: .build_single_image
+  only:
+    - master
+    - tags
+

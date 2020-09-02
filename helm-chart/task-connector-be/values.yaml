@@ -1,0 +1,97 @@
+fullnameOverride: task-connector-be
+
+
+replicaCount: 1
+
+image:
+  repository: registry.gitlab.com/target-smart-data-ai-search/task-connector-be/master
+  tag: latest
+  pullPolicy: Always
+  ports:
+    - name: rest
+      containerPort: 8080
+  extraCommand:
+    - extractor
+    - extract-tasks
+    - --db=ws
+    - --user=postgres
+    - --password=postgres
+    - --pgHost=postgresql.smart-databases
+    - --pgPort=5432
+    - --serverHost=localhost
+    - --serverPort=8080
+    - --mongo-addr=mongodb://mongodb.smart-databases:27017
+    - --ws=https://test.meeraspace.com/graphql
+    - --topic=taskTopic
+    - --project-id=smart-meera
+    - --client-id=nz-mdr
+    - --client-secret=DzXZxyDObSpsnR7qLqQ4p1LEVoIiE49e
+    - --oidc=https://sso.smart.meeraspace.com/token
+  extraEnv:
+
+imagePullSecret:
+  exist: false
+  enabled: true
+  values:
+    name: "smart-registry.gitlab.com"
+    type: "kubernetes.io/dockercfg"
+
+
+service:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    name: rest
+    targetPort: 8080
+
+ingress:
+  enabled: false
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+volumeMounts:
+  enabled: false
+  volumeMounts:
+  - name: CHANGEME
+    mountPath: CHANGEME
+    subpath: CHANGEME
+  - name: CHANGEME
+    mountPath: CHANGEME
+    subpath: CHANGEME
+
+volumes:
+  enabled: false
+  type: configmap
+  volumes:
+  - name: CHANGEME
+    nfs:
+      server: CHANGEME
+      path: CHANGEME
+  - name: CHANGEME
+    hostPath:
+      path: CHANGEME
+  - name: CHANGEME
+    emptyDir: {}
+
+persistentVolumeClaim:
+  enabled: false
+  volumeClaimTemplates:
+  - metadata:
+      name: CHANGEME
+    spec:
+      accessModes:
+        - "ReadWriteOnly"
+      resources:
+        requests:
+          storage: 2Gi
+      storageClassName: 'CHANGEME'
+
+configmap:
+  enabled: false
+  configurationFiles: {}
+  configurationEnv: {}

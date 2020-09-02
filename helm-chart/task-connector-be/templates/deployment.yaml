@@ -1,0 +1,80 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ template "APP.fullname" . }}
+  labels:
+    version: {{ template "APP.version" . }}
+    app: {{ template "APP.name" . }}
+    chart: {{ template "APP.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "APP.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "APP.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+{{- if  .Values.imagePullSecret.enabled }}
+      imagePullSecrets:
+      {{- with .Values.imagePullSecret.values }}
+      - name: {{ .name }}
+{{- end }}
+{{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+          {{- range $key, $value := .Values.image.extraEnv }}
+          - name: {{ $key }}
+            value: {{ $value }}
+          {{- end }}
+          command: 
+          {{- range $key, $value := .Values.image.extraCommand }}
+          - {{ $value }}
+          {{- end }}
+          ports:
+{{ toYaml .Values.image.ports | indent 10 }}
+{{- if  .Values.volumeMounts.enabled }}
+          volumeMounts:
+{{ toYaml .Values.volumeMounts.volumeMounts | indent 12 }}  
+{{- end }}    
+          resources:
+{{ toYaml .Values.resources | indent 12 }}      
+          livenessProbe:
+{{ toYaml .Values.livenessProbe | indent 12 }}      
+          readinessProbe:
+{{ toYaml .Values.readinessProbe | indent 12 }}      
+{{- if and  .Values.volumes.enabled  .Values.volumeMounts.enabled }}
+      volumes:
+{{- if (eq .Values.volumes.type "configmap")}}
+      - name: configmap
+        configMap:
+          name: {{ template "APP.fullname" . }}-config
+{{- end }}   
+{{- if .Values.volumes.volumes }}
+{{ toYaml .Values.volumes.volumes | indent 6 }}  
+{{- end }}   
+{{- end }}     
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+{{- if  .Values.persistentVolumeClaim.enabled }}
+  volumeClaimTemplates:
+{{ toYaml .Values.persistentVolumeClaim.volumeClaimTemplates | indent 2 }}      
+{{- end }}
